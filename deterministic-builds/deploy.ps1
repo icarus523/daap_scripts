@@ -14,5 +14,8 @@ $vmParametersFilePath = "parameters.json"
 ..\_common\azure_verify_login.ps1
 ..\_common\azure_deploy_template.ps1 $subscriptionId $resourceGroupName $resourceGroupLocation $deploymentName
 
+# Tag resources
+Set-AzureRmResourceGroup -Name $resourceGroupName ​-Tag @{Department="DJAG";businessowner="OLGR";"Business Unit"="OLGR";application="TATTS Lotto Verification";Environment="DEVEL";infoclassification="XXXXX"}​
+
 $rdpFilePath = "$PSScriptRoot\build_machine.rdp"
 Get-AzureRmRemoteDesktopFile -ResourceGroupName $resourceGroupName -Name "build" -LocalPath $rdpFilePath -Launch
