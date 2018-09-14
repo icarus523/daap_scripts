@@ -1,0 +1,410 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "Australia East",
+      "metadata": {
+        "description": "Location of resources"
+      }
+    },
+    "newStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of new storage account to be created"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM to be created"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Size of the VM to be created"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "customScriptStorageAccountName": {
+      "type": "string",
+      "defaultValue": "tattsgroupscripts",
+      "metadata": {
+        "description": "Name of Azure Storage Account where the custom script is located"
+      }
+    },
+    "customScriptFileUri": {
+      "type": "string",
+      "defaultValue": "https://tattsgroupscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1",
+      "metadata": {
+        "description": "Azure Storage Uri of the custom script file e.g. https://test.blob.core.windows.net/scripts/test.ps1"
+      }
+    },
+    "customScriptFileToRun": {
+      "type": "string",
+      "defaultValue": "dvs_script_prod_olgr.ps1",
+      "metadata": {
+        "description": "Name of the script to be run on the VM"
+      }
+    },
+    "customScriptStorageAccountResourceGroup": {
+      "type": "string",
+      "defaultValue": "tattsgroup-scripts",
+      "metadata": {
+        "description": "Name of the Resource Group of the storage account containing the storage account which contains the script"
+      }
+    },
+    "sqlConnectivityType": {
+      "type": "string",
+      "defaultValue": "local"
+    },
+    "sqlPortNumber": {
+      "type": "int",
+      "defaultValue": 1433
+    },
+    "sqlStorageDisksCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "sqlStorageWorkloadType": {
+      "type": "string",
+      "defaultValue": "General"
+    },
+    "sqlAuthenticationLogin": {
+      "type": "string",
+      "defaultValue": "GEN-USER"
+    },
+    "sqlAuthenticationPassword": {
+      "type": "securestring",
+      "defaultValue": "GEN-PASSWORD"
+    },
+    "dnsName": {
+      "type": "string"
+    },
+    "aadClientID": {
+      "type": "string",
+      "metadata": {
+        "description": "Client ID of AAD app which has permissions to KeyVault"
+      }
+    },
+    "aadClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client Secret of AAD app which has permissions to KeyVault"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the KeyVault to place the volume encryption key"
+      }
+    },
+    "keyVaultResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group of the KeyVault"
+      }
+    },
+    "useExistingKek": {
+      "type": "string",
+      "defaultValue": "nokek",
+      "allowedValues": [
+        "nokek",
+        "kek"
+      ],
+      "metadata": {
+        "description": "Select kek if the secret should be encrypted with a key encryption key and pass explicit keyEncryptionKeyURL. For nokek, you can keep keyEncryptionKeyURL empty."
+      }
+    },
+    "keyEncryptionKeyURL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
+      }
+    }
+  },
+  "variables": {
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "sqlIP",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "VNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "vnetAddressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "privateip": "10.0.0.10",
+    "nicName": "OlgrSqlNic",
+    "securityGroupName": "Sql",
+    "imagePublisher": "MicrosoftSQLServer",
+    "imageOffer": "SQL2016SP1-WS2016",
+    "imageSKU": "Web",
+    "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('customScriptStorageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', parameters('customScriptStorageAccountName'))]",
+    "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File ', parameters('customScriptFileToRun'))]",
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
+    "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+  },
+  "resources": [{
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('newStorageAccountName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": []
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [{
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "[variables('privateip')]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "dnsSettings": {
+                "domainNameLabel": "tattsdvsolgr"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+        }
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true",
+            "timeZone": "E. Australia Standard Time"
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [{
+              "name": "[concat(parameters('vmName'), '-disk-1')]",
+              "vhd": {
+                "uri": "[concat(concat(reference(resourceId(resourceGroup().Name, 'Microsoft.Storage/storageAccounts', parameters('newstorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('vmName'), '-disk-1-201624135551', '.vhd')]"
+              },
+              "createOption": "Empty",
+              "lun": 0,
+              "diskSizeGB": "1023",
+              "caching": "ReadOnly"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [{
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    }, {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/SqlIaasExtension')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "1.2",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "AutoTelemetrySettings": {
+            "Region": "[parameters('location')]"
+          },
+          "AutoPatchingSettings": {
+            "PatchCategory": "WindowsMandatoryUpdates",
+            "Enable": false,
+            "DayOfWeek": "Sunday",
+            "MaintenanceWindowStartingHour": "2",
+            "MaintenanceWindowDuration": "60"
+          },
+          "AutoBackupSettings": {
+            "Enable": false,
+            "RetentionPeriod": "30",
+            "EnableEncryption": false
+          },
+          "KeyVaultCredentialSettings": {
+            "Enable": false,
+            "CredentialName": ""
+          },
+          "ServerConfigurationsManagementSettings": {
+            "SQLConnectivityUpdateSettings": {
+              "ConnectivityType": "[parameters('sqlConnectivityType')]",
+              "Port": "[parameters('sqlPortNumber')]"
+            },
+            "SQLWorkloadTypeUpdateSettings": {
+              "SQLWorkloadType": "[parameters('sqlStorageWorkloadType')]"
+            }
+          }
+        },
+        "protectedSettings": {
+          "SQLAuthUpdateUserName": "[parameters('sqlAuthenticationLogin')]",
+          "SQLAuthUpdatePassword": "[parameters('sqlAuthenticationPassword')]"
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ]
+    }, {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', 'customScriptExtension')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": "true",
+        "settings": {
+          "fileUris": [
+            "[parameters('customScriptFileUri')]"
+          ],
+          "commandToExecute": "[variables('commandToExecute')]"
+        },
+        "protectedSettings": {
+          "storageAccountName": "[parameters('customScriptStorageAccountName')]",
+          "storageAccountKey": "[listKeys(variables('accountid'),'2015-05-01-preview').key1]"
+        }
+      }
+    }, {
+      "name": "UpdateEncryptionSettings",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/customScriptExtension')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "aadClientID": {
+            "value": "[parameters('aadClientID')]"
+          },
+          "aadClientSecret": {
+            "value": "[parameters('aadClientSecret')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "keyVaultResourceGroup": {
+            "value": "[parameters('keyVaultResourceGroup')]"
+          },
+          "useExistingKek": {
+            "value": "[parameters('useExistingKek')]"
+          },
+          "keyEncryptionKeyURL": {
+            "value": "[parameters('keyEncryptionKeyURL')]"
+          }
+        }
+      }
+    }
+  ]
+}

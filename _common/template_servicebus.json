@@ -1,0 +1,36 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "servicebusname": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "australiaeast"
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "2"
+        },
+        "messagingUnits": {
+            "type": "string",
+            "defaultValue": "1"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-08-01",
+            "name": "[parameters('servicebusname')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "properties": {
+                "MessagingSku": "[parameters('sku')]",
+                "MessagingSKUPlan": {
+                    "MessagingUnits": "[parameters('messagingUnits')]",
+                    "SKU": "[parameters('sku')]"
+                }
+            }
+        }
+    ]
+}

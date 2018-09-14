@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "blobname": {
+            "type": "string"
+        },
+        "accountType": {
+            "type": "string",
+            "defaultValue": "Standard_GRS"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "australiaeast"
+        },
+        "encryptionEnabled": {
+            "type": "bool",
+            "defaultValue": true
+        },
+        "accessTier": {
+            "type": "string",
+            "allowedValues": [
+                "Cool",
+                "Hot"
+            ],
+            "defaultValue": "Hot"
+        },
+        "httpsTrafficOnlyEnabled": {
+            "type": "bool",
+            "defaultValue": true
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-06-01",
+            "name": "[parameters('blobname')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "[parameters('accountType')]"
+            },
+            "kind": "BlobStorage",
+            "properties": {
+                "supportsHttpsTrafficOnly": "[parameters('httpsTrafficOnlyEnabled')]",
+                "accessTier": "[parameters('accessTier')]",
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": "[parameters('encryptionEnabled')]"
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                }
+            }
+        }
+    ]
+}
