@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "blobname": {
-            "value": "dvsolgrblobprd"
+            "value": "dvsolgrblobprdv2"
         }
     }
 }
