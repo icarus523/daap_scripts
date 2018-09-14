@@ -15,7 +15,7 @@
             "value": "azureadmin"
         },
         "virtualNetworkName": {
-            "value": "DeterministicBuilds-vnet"
+            "value": "qdj-nprd-aes-vnet-inf"
         },
         "networkInterfaceName": {
             "value": "build-nic"
@@ -36,7 +36,7 @@
             "value": "10.1.0.0/24"
         },
         "subnetName": {
-            "value": "build-subnet"
+            "value": "qdj-nprd-aes-vnet-inf-dmz"
         },
         "subnetPrefix": {
             "value": "10.1.0.0/24"
