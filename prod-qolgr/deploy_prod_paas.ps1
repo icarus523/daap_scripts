@@ -20,6 +20,9 @@ $busParametersFilePath = "sb-prd.json"
 ..\_common\azure_deploy_template.ps1 $subscriptionId $resourceGroupName $resourceGroupLocation $resourceGroupName $busTemplateFilePath $busParametersFilePath
 ..\_common\azure_create_keyvault.ps1 $resourceGroupName $resourceGroupLocation $keyVaultName
 
+# Tag resources
+Set-AzureRmResourceGroup -Name $resourceGroupName ​-Tag @{Department="DJAG";businessowner="OLGR";"Business Unit"="OLGR";application="TATTS Lotto Verification";Environment="DEVEL";infoclassification="XXXXX"}​
+
 # These must match the values in the blob parameter files
 $blob1Name = "dvsolgrblobprdv2"
 $blob2Name = "dvsolgrblob2prdv2"
