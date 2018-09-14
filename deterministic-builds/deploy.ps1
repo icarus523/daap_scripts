@@ -1,4 +1,9 @@
+<#
+Previous subscriptionId: 
 $subscriptionId = "6401edaa-7d66-458e-9cac-04389b15bace"
+
+#>
+$subscriptionId = "bb1dd1e3-b731-4239-a1a0-fa1a52457b46"
 $resourceGroupName = "DeterministicBuilds"
 $resourceGroupLocation = "Australia East"
 $deploymentName = $resourceGroupName
