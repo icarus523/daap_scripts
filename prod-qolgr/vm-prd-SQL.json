@@ -15,10 +15,10 @@
             "value": "dvs_script_prod_olgr.ps1"
         },
         "customScriptFileUri": {
-            "value": "https://tattsgroupscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1"
+            "value": "https://olgrscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1"
         },
         "keyVaultName": {
-            "value": "DVSOLGR-PROD-keyvault"
+            "value": "DVSOLGR-PROD-keyvault2"
         },
         "keyVaultResourceGroup": {
             "value": "PROD-DVSOLGR-paas"

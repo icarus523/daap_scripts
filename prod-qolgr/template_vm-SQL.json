@@ -43,14 +43,14 @@
     },
     "customScriptStorageAccountName": {
       "type": "string",
-      "defaultValue": "tattsgroupscripts",
+      "defaultValue": "olgrscripts",
       "metadata": {
         "description": "Name of Azure Storage Account where the custom script is located"
       }
     },
     "customScriptFileUri": {
       "type": "string",
-      "defaultValue": "https://tattsgroupscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1",
+      "defaultValue": "https://olgrscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1",
       "metadata": {
         "description": "Azure Storage Uri of the custom script file e.g. https://test.blob.core.windows.net/scripts/test.ps1"
       }
@@ -64,7 +64,7 @@
     },
     "customScriptStorageAccountResourceGroup": {
       "type": "string",
-      "defaultValue": "tattsgroup-scripts",
+      "defaultValue": "Olgr-Scripts",
       "metadata": {
         "description": "Name of the Resource Group of the storage account containing the storage account which contains the script"
       }
