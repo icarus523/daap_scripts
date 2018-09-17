@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "servicebusname": {
-            "value": "dvsolgrsbprdv2"
+            "value": "dvsolgrsbprd2"
         }
     }
 }
