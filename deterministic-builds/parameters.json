@@ -8,38 +8,34 @@
         "virtualMachineName": {
             "value": "build"
         },
-        "virtualMachineSize": {
-            "value": "Standard_D2s_v3"
-        },
-        "adminUsername": {
-            "value": "azureadmin"
-        },
-        "virtualNetworkName": {
-            "value": "qdj-nprd-aes-vnet-inf"
-        },
         "networkInterfaceName": {
             "value": "build-nic"
         },
         "networkSecurityGroupName": {
             "value": "build-nsg"
         },
-        "diagnosticsStorageAccountName": {
-            "value": "deterministicbuilds"
+        "networkSecurityGroupRules": {
+            "value": [
+                {
+                    "name": "RDP",
+                    "properties": {
+                        "priority": 300,
+                        "protocol": "TCP",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourceAddressPrefix": "10.62.75.0/24",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*",
+                        "destinationPortRange": "3389"
+                    }
+                }
+            ]
         },
-        "diagnosticsStorageAccountType": {
-            "value": "Standard_LRS"
-        },
-        "diagnosticsStorageAccountId": {
-            "value": "Microsoft.Storage/storageAccounts/deterministicbuilds"
-        },
-        "addressPrefix": {
-            "value": "10.1.0.0/24"
+        "virtualNetworkId": {
+            "value": "/subscriptions/bb1dd1e3-b731-4239-a1a0-fa1a52457b46/resourceGroups/qdj-nprd-aes-rg-net/providers/Microsoft.Network/virtualNetworks/qdj-nprd-aes-vnet-inf"
         },
         "subnetName": {
-            "value": "qdj-nprd-aes-vnet-inf-dmz"
-        },
-        "subnetPrefix": {
-            "value": "10.1.0.0/24"
+            "value": "qdj-nprd-aes-snet-inf-dmz"
         },
         "publicIpAddressName": {
             "value": "build-ip"
@@ -49,6 +45,15 @@
         },
         "publicIpAddressSku": {
             "value": "Basic"
-        }
+        },
+        "diagnosticsStorageAccountName": {
+            "value": "deterministicbuilds"
+        },
+        "diagnosticsStorageAccountId": {
+            "value": "Microsoft.Storage/storageAccounts/deterministicbuilds"
+        },
+        "diagnosticsStorageAccountType": {
+            "value": "Standard_LRS"
+        },
     }
 }

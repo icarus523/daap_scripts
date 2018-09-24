@@ -8,19 +8,19 @@
         "virtualMachineName": {
             "type": "string"
         },
-        "virtualMachineSize": {
+        "networkSecurityGroupName": {
             "type": "string"
         },
-        "adminUsername": {
+        "networkSecurityGroupRules": {
+            "type": "array"
+        },
+        "virtualNetworkId": {
             "type": "string"
         },
-        "virtualNetworkName": {
+        "subnetName": {
             "type": "string"
         },
         "networkInterfaceName": {
-            "type": "string"
-        },
-        "networkSecurityGroupName": {
             "type": "string"
         },
         "adminPassword": {
@@ -35,15 +35,6 @@
         "diagnosticsStorageAccountType": {
             "type": "string"
         },
-        "addressPrefix": {
-            "type": "string"
-        },
-        "subnetName": {
-            "type": "string"
-        },
-        "subnetPrefix": {
-            "type": "string"
-        },
         "publicIpAddressName": {
             "type": "string"
         },
@@ -52,17 +43,18 @@
         },
         "publicIpAddressSku": {
             "type": "string"
-        }
+        },
     },
     "variables": {
-        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]",
+        "vnetId": "[parameters('virtualNetworkId')]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
     },
     "resources": [
         {
             "name": "[parameters('virtualMachineName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2017-03-30",
+            "apiVersion": "2018-04-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
@@ -71,7 +63,7 @@
             "properties": {
                 "osProfile": {
                     "computerName": "[parameters('virtualMachineName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminUsername": "azureadmin",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
                         "provisionVmAgent": "true",
@@ -79,7 +71,7 @@
                     }
                 },
                 "hardwareProfile": {
-                    "vmSize": "[parameters('virtualMachineSize')]"
+                    "vmSize": "Standard_D2s_v3"
                 },
                 "storageProfile": {
                     "imageReference": {
@@ -106,50 +98,44 @@
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticsStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
+                        "storageUri": "[concat('https://', parameters('diagnosticsStorageAccountName'), '.blob.core.windows.net/')]"
                     }
                 }
+            },
+            "tags": {
+                "Department": "DJAG",
+                "businessowner": "OLGR",
+                "application":"TATTS Lotto Verification",
+                "Environment":"DEVEL",
+                "infoclassification" : "XXXXX"
             }
         },
         {
             "name": "[parameters('diagnosticsStorageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "2018-02-01",
             "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "[parameters('diagnosticsStorageAccountType')]"
-            }
-        },
-        {
-            "name": "[parameters('virtualNetworkName')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2017-08-01",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('addressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[parameters('subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[parameters('subnetPrefix')]"
-                        }
-                    }
-                ]
+            "properties": {},
+            "kind": "Storage",
+            "sku": {
+                "name": "[parameters('diagnosticsStorageAccountType')]"
+            },
+            "tags": {
+                "Department": "DJAG",
+                "businessowner": "OLGR",
+                "application":"TATTS Lotto Verification",
+                "Environment":"DEVEL",
+                "infoclassification": "XXXXX"
             }
         },
         {
             "name": "[parameters('networkInterfaceName')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "2018-04-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -161,56 +147,63 @@
                             },
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIpAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
                             }
                         }
                     }
                 ],
                 "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
-                }
-            }
+                    "id": "[variables('nsgId')]"
+                },
+            },
+            "tags": {
+                "Department": "DJAG",
+                "businessowner": "OLGR",
+                "application":"TATTS Lotto Verification",
+                "Environment":"DEVEL",
+                "infoclassification" : "XXXXX"
+            },
+        },
+        {
+            "name": "[parameters('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2018-08-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": "[parameters('networkSecurityGroupRules')]"
+            },
+            "tags": {
+                "Department": "DJAG",
+                "businessowner": "OLGR",
+                "application":"TATTS Lotto Verification",
+                "Environment":"DEVEL",
+                "infoclassification":"XXXXX"
+            },
         },
         {
             "name": "[parameters('publicIpAddressName')]",
             "type": "Microsoft.Network/publicIpAddresses",
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2018-08-01",
             "location": "[parameters('location')]",
             "properties": {
                 "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
             },
             "sku": {
                 "name": "[parameters('publicIpAddressSku')]"
-            }
-        },
-        {
-            "name": "[parameters('networkSecurityGroupName')]",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2017-06-01",
-            "location": "[parameters('location')]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "default-allow-rdp",
-                        "properties": {
-                            "priority": 1000,
-                            "protocol": "TCP",
-                            "access": "Allow",
-                            "direction": "Inbound",
-                            "sourceAddressPrefix": "10.62.75.130", "10.62.75.62",
-                            "sourcePortRange": "*",
-                            "destinationAddressPrefix": "*",
-                            "destinationPortRange": "3389"
-                        }
-                    }
-                ]
-            }
+            },
+            "tags": {
+                "Department": "DJAG",
+                "businessowner": "OLGR",
+                "application":"TATTS Lotto Verification",
+                "Environment":"DEVEL",
+                "infoclassification":"XXXXX"
+            },
         }
     ],
     "outputs": {
         "adminUsername": {
             "type": "string",
-            "value": "[parameters('adminUsername')]"
+            "value": "azureadmin"
         }
     }
 }
