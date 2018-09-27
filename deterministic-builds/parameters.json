@@ -8,6 +8,9 @@
         "virtualMachineName": {
             "value": "build"
         },
+        "adminUsername": {	
+            "value": "azureadmin"	
+        },
         "networkInterfaceName": {
             "value": "build-nic"
         },
@@ -25,7 +28,7 @@
                         "direction": "Inbound",
                         "sourceAddressPrefix": "10.62.75.0/24",
                         "sourcePortRange": "*",
-                        "destinationAddressPrefix": "*",
+                        "destinationAddressPrefix": "10.42.137.128/25",
                         "destinationPortRange": "3389"
                     }
                 }

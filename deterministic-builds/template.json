@@ -8,6 +8,9 @@
         "virtualMachineName": {
             "type": "string"
         },
+        "adminUsername": {
+            "type": "string"
+        },
         "networkSecurityGroupName": {
             "type": "string"
         },
@@ -63,7 +66,7 @@
             "properties": {
                 "osProfile": {
                     "computerName": "[parameters('virtualMachineName')]",
-                    "adminUsername": "azureadmin",
+                    "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
                         "provisionVmAgent": "true",
@@ -203,7 +206,7 @@
     "outputs": {
         "adminUsername": {
             "type": "string",
-            "value": "azureadmin"
+            "value": "[parameters('adminUsername')]"
         }
     }
 }
