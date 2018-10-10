@@ -28,9 +28,6 @@
         "description": "Size of the VM to be created"
       }
     },
-    "virtualNetworkId": {
-        "type": "string"
-    },    
     "adminUsername": {
       "type": "string",
       "defaultValue": "azureuser",
@@ -96,9 +93,6 @@
       "type": "securestring",
       "defaultValue": "GEN-PASSWORD"
     },
-    "subnetName": {
-        "type": "string"
-    },
     "dnsName": {
       "type": "string"
     },
@@ -150,8 +144,12 @@
     "publicIPAddressName": "sqlIP",
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "VNET",
-    "vnetId": "[parameters('virtualNetworkId')]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "vnetAddressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "privateip": "10.0.0.10",
     "nicName": "OlgrSqlNic",
     "securityGroupName": "Sql",
     "imagePublisher": "MicrosoftSQLServer",
@@ -162,85 +160,86 @@
     "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
     "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
   },
-  "resources": [
-    {
-        "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('newStorageAccountName')]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[parameters('location')]",
-        "properties": {
-            "accountType": "[variables('storageAccountType')]"
+  "resources": [{
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('newStorageAccountName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": []
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
         },
-        "tags": {
-            "Department": "DJAG",
-            "businessowner": "OLGR",
-            "application":"TATTS Lotto Verification",
-            "Environment":"DEVEL",
-            "infoclassification" : "XXXXX"
-        },
-    }, 
-    {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('publicIPAddressName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-            "idleTimeoutInMinutes": 4,
-            "dnsSettings": {
-                "domainNameLabel": "[parameters('dnsName')]"
+        "subnets": [{
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
             }
-        }
-    }, 
-    {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/networkSecurityGroups",
-        "name": "[variables('securityGroupName')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-            "securityRules": []
-        }
-    }, 
-    {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[variables('nicName')]",
-        "location": "[parameters('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-            "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]",
+          }
+        ]
+      }
+    }, {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [{
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "[variables('privateip')]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "dnsSettings": {
+                "domainNameLabel": "tattsdvsolgr"
+              }
+            }
+          }
         ],
-        "properties": {
-            "ipConfigurations": [
-                {
-                    "name": "ipconfig1",
-                    "properties": {
-                        "privateIPAllocationMethod": "Dynamic",
-                        "subnet": {
-                            "id": "[variables('subnetRef')]"
-                        },
-                        "publicIPAddress": {
-                            "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
-                        },
-                        "dnsSettings": {
-                            "domainNameLabel": "tattsdvsolgr"
-                        }
-                    }
-                }
-            ],
-            "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
-            },
-            "tags": {
-                "Department": "DJAG",
-                "businessowner": "OLGR",
-                "application":"TATTS Lotto Verification",
-                "Environment":"DEVEL",
-                "infoclassification" : "XXXXX"
-            },
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
         }
-    }, 
-    {
+      }
+    }, {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
@@ -367,6 +366,43 @@
         "protectedSettings": {
           "storageAccountName": "[parameters('customScriptStorageAccountName')]",
           "storageAccountKey": "[listKeys(variables('accountid'),'2015-05-01-preview').key1]"
+        }
+      }
+    }, {
+      "name": "UpdateEncryptionSettings",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/customScriptExtension')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "aadClientID": {
+            "value": "[parameters('aadClientID')]"
+          },
+          "aadClientSecret": {
+            "value": "[parameters('aadClientSecret')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "keyVaultResourceGroup": {
+            "value": "[parameters('keyVaultResourceGroup')]"
+          },
+          "useExistingKek": {
+            "value": "[parameters('useExistingKek')]"
+          },
+          "keyEncryptionKeyURL": {
+            "value": "[parameters('keyEncryptionKeyURL')]"
+          }
         }
       }
     }

@@ -65,13 +65,13 @@ try {
     Disable-AzureRmDataCollection
 
     # Define account storage access
-    $storageAccountName = "REPLACEME"
-    $storageAccountKey = "REPLACEME"
+    $storageAccountName = "olgrscripts"
+    $storageAccountKey = "aCZ6A1ivWjWyLSzkbysQi6nlYpypQglCRe5FnLIghaP6z/kGG8Cpal82P5l74GJrq3ll9LG1KoDAVsnQ9CHWEg=="
     $ctx = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
     $deployItemsContainerName = "deployitems"
     $certsContainerName  = "certsprod"
     $dvsServiceAccountUsername = "$env:COMPUTERNAME\azureuser"
-    $dvsServiceAccountPassword = "REPLACEME"    
+    $dvsServiceAccountPassword = "1234567890abcd!"    
 
     # Import RNG device certs into trusted root store
     Write-Host "Installing certificates from container $certsContainerName to trusted root"
@@ -86,9 +86,9 @@ try {
     Write-Host "Trusted root certificates installed"
 
     # Import DVS.Server private key
-    $privateKeyContainer = "olgrscripts"
-    $privateKeyCert = "REPLACEME" # case sensitive
-    $certPassword = "REPLACEME"
+    $privateKeyContainer = "scripts"
+    $privateKeyCert = "dvs_certificate.pfx" # case sensitive
+    $certPassword = "pelikan"
 
     Write-Host "Installing DVS.Server private key..."
     Get-AzureStorageBlobContent -Blob $privateKeyCert -Container $privateKeyContainer -Context $ctx -Destination $localTmpDir -Force
@@ -120,7 +120,7 @@ try {
     Get-AzureStorageBlobContent -Blob $dvsZipFileName -Container $deployItemsContainerName -Context $ctx -Destination $localTmpDir
     Expand-Archive "$localTmpDir\$dvsZipFileName" -DestinationPath $dvsInstallPath
     cd $dvsInstallPath
-    cd "Release"
+    cd "DVS.Server\Release"
     .\DVS.Server.exe install -username:$dvsServiceAccountUsername -password:$dvsServiceAccountPassword
     Start-Service "DVS Server"
     Write-Host "DVS.Server installed and started"
