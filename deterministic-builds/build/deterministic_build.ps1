@@ -82,8 +82,8 @@ Write-Output "Extracting zip file contents..."
 if (Test-Path $extractPath) { 
     Remove-Item -Recurse -Force $extractPath # remove old path if it exists, allow for multiple re-runs
 }
-New-Item -ItemType Directory -Force -Path $rootPath
-Expand-Archive $zipFilePath -DestinationPath $rootPath
+New-Item -ItemType Directory -Force -Path $extractPath
+Expand-Archive $zipFilePath -DestinationPath $extractPath
 
 # Compile
 $solutionFilePath = "$extractPath\$SolutionFileName"
