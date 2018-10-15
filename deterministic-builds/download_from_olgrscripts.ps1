@@ -3,12 +3,12 @@
     Downloads the files in the $certsprod_dir, $deployitems_dir and $scripts_dir to their corresponding directory in the olgrscripts blob storage. 
 #>
 # change the following to your respective directories. 
-$dl_directory = "C:\Users\Public\" # Change Me
+$dl_directory = "C:\build\" # Change Me
 
 $download_filename = "DAAP 1.1.zip"
 $blob_container_name = "source"
 
-..\_common\azure_verify_login.ps1
+.\azure_verify_login.ps1
 
 $subscriptionId = "bb1dd1e3-b731-4239-a1a0-fa1a52457b46"
 
