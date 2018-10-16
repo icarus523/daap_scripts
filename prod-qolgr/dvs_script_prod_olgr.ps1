@@ -39,6 +39,28 @@ function SetRunAsServiceRights([string] $username) {
 	}
 }
 
+<#
+.Synopsis
+  JA This function is used to verify the hash of downloaded programs against known hashes.
+#>
+function VerifyFileHash([string] $FileName, [string] $ExpectedFileHash) {
+    $FilePath = $FileName
+    Write-Output "Verifying hash..."
+    if (!(Test-Path $FilePath)) { 
+        throw "No file found matching name $FileName" 
+    }
+    $FileHash = (Get-FileHash $FilePath -Algorithm SHA256).Hash
+
+    if ($ExpectedFileHash -ine $FileHash) {
+        throw "Hash mismatch on file, check you have the correct file name and that the provided hash is valid
+        Expected Hash: $ExpectedFileHash
+        Actual Hash: $FileHash"
+    }
+
+    Write-Output "$FileName hash matches: $FileHash"​​
+}
+
+
 $transcriptFile = "c:\Logs\customscript_transcript_$((Get-Date).ToString("yyyyMMdd_HHmmss")).txt"
 New-Item -ItemType Directory -Force -Path c:\Logs
 Start-Transcript $transcriptFile -IncludeInvocationHeader
@@ -53,6 +75,9 @@ try {
     $powershellMsiPath = "$localTmpDir\azurerm.msi"
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     (New-Object System.Net.WebClient).DownloadFile($powershellMsiWebUrl, $powershellMsiPath)
+    
+    VerifyFileHash "$localTmpDir\azurerm.msi" "4FF5A84A6F68A41DC0BDD2F64454794E81306748F6CDF04A90F9484BEF14786C"
+
     Start-Process msiexec.exe -Wait -ArgumentList "/I $powershellMsiPath /quiet"
     
     if (-not (Get-Module AzureRM)) {
@@ -124,11 +149,13 @@ try {
     .\DVS.Server.exe install -username:$dvsServiceAccountUsername -password:$dvsServiceAccountPassword
     Start-Service "DVS Server"
     Write-Host "DVS.Server installed and started"
-
+  
     # Install & Configure OMS (run these last because some MSIs install in the background after starting the setup process)
     Write-Host "Installing OMS component..."
     Get-AzureStorageBlobContent -Blob "MMASetup-AMD64.exe" -Container $deployItemsContainerName -Context $ctx -Destination $localTmpDir
     cd $localTmpDir
+    VerifyFileHash "$localTmpDir\MMASetup-AMD64.exe" "E6100B7EE0545C45EA8D867C4A7F4F9D1B84BAF24550F757DE218970E2449FAE"
+    
     .\MMASetup-AMD64.exe /C:"setup.exe /qn ADD_OPINSIGHTS_WORKSPACE=1 OPINSIGHTS_WORKSPACE_ID=757ad048-0ed4-4b75-9368-01523571f1eb OPINSIGHTS_WORKSPACE_KEY=Umt76yn53pg0Yu1DPkinY74sLZCxzfDUKTRJEFD+/Ob5ef5Z7RRfmGww6QJ1K2Iyor2mLxZ7REUvL2auaB1IdQ== AcceptEndUserLicenseAgreement=1"
 
     Write-Host "Completed successfully"
