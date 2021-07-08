@@ -15,13 +15,19 @@
             "value": "dvs_script_prod_olgr.ps1"
         },
         "customScriptFileUri": {
-            "value": "https://tattsgroupscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1"
+            "value": "https://olgrscripts.blob.core.windows.net/scripts/dvs_script_prod_olgr.ps1"
         },
         "keyVaultName": {
-            "value": "DVSOLGR-PROD-keyvault"
+            "value": "DVSOLGR-PROD-keyvault2"
         },
         "keyVaultResourceGroup": {
             "value": "PROD-DVSOLGR-paas"
-        }
+        },
+        "virtualNetworkId": {
+            "value": "/subscriptions/bb1dd1e3-b731-4239-a1a0-fa1a52457b46/resourceGroups/qdj-nprd-aes-rg-net/providers/Microsoft.Network/virtualNetworks/qdj-nprd-aes-vnet-inf"
+        },
+        "subnetName": {
+            "value": "qdj-nprd-aes-snet-inf-dmz"
+        },
     }
 }
